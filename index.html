@@ -1,0 +1,743 @@
+<title>Setlist — a rock &amp; roll grouping game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root{
+    --bg:#15120e;
+    --bg-soft:#1b1712;
+    --surface:#221d16;
+    --surface-hover:#2a2318;
+    --ink:#f3ede0;
+    --ink-dim:#a89a83;
+    --line:#3a3226;
+    --accent:#e2a53a;
+    --accent-ink:#1b1712;
+    --tier1:#d8a83c; --tier1-ink:#1b1712;
+    --tier2:#3f8fa0; --tier2-ink:#0d1b1e;
+    --tier3:#c15f86; --tier3-ink:#2a0f19;
+    --tier4:#7d69b8; --tier4-ink:#17122b;
+    --radius:7px;
+    --shadow: 0 1px 0 rgba(0,0,0,.4);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#e7e9e2;
+      --bg-soft:#eeefe9;
+      --surface:#f6f5ef;
+      --surface-hover:#eceae1;
+      --ink:#201b14;
+      --ink-dim:#665c4c;
+      --line:#cfc9ba;
+      --accent:#a56e19;
+      --accent-ink:#fbf7ee;
+      --tier1:#b8862a; --tier1-ink:#fbf7ee;
+      --tier2:#2c7387; --tier2-ink:#f0f8fa;
+      --tier3:#a3436a; --tier3-ink:#faf0f4;
+      --tier4:#5b4a97; --tier4-ink:#f4f2fb;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#15120e; --bg-soft:#1b1712; --surface:#221d16; --surface-hover:#2a2318;
+    --ink:#f3ede0; --ink-dim:#a89a83; --line:#3a3226;
+    --accent:#e2a53a; --accent-ink:#1b1712;
+    --tier1:#d8a83c; --tier1-ink:#1b1712;
+    --tier2:#3f8fa0; --tier2-ink:#0d1b1e;
+    --tier3:#c15f86; --tier3-ink:#2a0f19;
+    --tier4:#7d69b8; --tier4-ink:#17122b;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"]{
+    --bg:#e7e9e2; --bg-soft:#eeefe9; --surface:#f6f5ef; --surface-hover:#eceae1;
+    --ink:#201b14; --ink-dim:#665c4c; --line:#cfc9ba;
+    --accent:#a56e19; --accent-ink:#fbf7ee;
+    --tier1:#b8862a; --tier1-ink:#fbf7ee;
+    --tier2:#2c7387; --tier2-ink:#f0f8fa;
+    --tier3:#a3436a; --tier3-ink:#faf0f4;
+    --tier4:#5b4a97; --tier4-ink:#f4f2fb;
+    color-scheme: light;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.05;
+    mix-blend-mode:overlay;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .page{ position:relative; z-index:1; max-width:480px; margin:0 auto; padding:22px 16px 40px; }
+
+  /* ---------- header ---------- */
+  .tag{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
+    font-size:11px; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--ink-dim);
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    padding:4px 9px 4px 9px;
+    border-radius:3px;
+    transform:rotate(-1deg);
+  }
+  .tag b{ color:var(--accent); font-weight:700; letter-spacing:.02em; }
+  h1{
+    font-size:clamp(30px,9vw,42px);
+    line-height:.92;
+    font-weight:800;
+    letter-spacing:-0.01em;
+    text-transform:uppercase;
+    margin:12px 0 6px;
+    text-wrap:balance;
+  }
+  .sub{
+    color:var(--ink-dim);
+    font-size:14.5px;
+    line-height:1.45;
+    max-width:46ch;
+    margin:0 0 18px;
+  }
+  .puzmeta{
+    display:flex; align-items:baseline; justify-content:space-between;
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
+    font-size:12px; color:var(--ink-dim);
+    border-top:1px solid var(--line);
+    padding-top:10px; margin-bottom:16px;
+  }
+  .puzmeta strong{ color:var(--ink); font-weight:700; }
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:relative;
+    text-align:center;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    min-height:20px;
+    margin-bottom:8px;
+    color:var(--ink);
+    opacity:0;
+    transition:opacity .18s ease;
+  }
+  .toast.show{ opacity:1; }
+
+  /* ---------- solved stack ---------- */
+  .solved-stack{ display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
+  .solved-row{
+    border-radius:var(--radius);
+    padding:12px 14px;
+    animation:solveIn .32s ease both;
+  }
+  @keyframes solveIn{ from{ opacity:0; transform:translateY(-8px) scale(.98);} to{opacity:1; transform:none;} }
+  .solved-row .cat{ font-size:12.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+  .solved-row .items{ font-size:12px; margin-top:3px; opacity:.9; letter-spacing:.02em; }
+
+  /* ---------- grid ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:7px;
+    margin-bottom:14px;
+  }
+  .tile{
+    aspect-ratio:1/0.92;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    color:var(--ink);
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.01em;
+    padding:6px;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+    transition:background .1s ease, color .1s ease, border-color .1s ease, transform .08s ease;
+  }
+  .tile:hover{ background:var(--surface-hover); }
+  .tile:active{ transform:scale(.96); }
+  .tile:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .tile.selected{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:var(--accent-ink);
+  }
+  .tile.shake{ animation:shake .32s ease; }
+  @keyframes shake{ 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} 100%{transform:translateX(0)} }
+  .tile.gone{ animation:tileOut .22s ease forwards; }
+  @keyframes tileOut{ to{ opacity:0; transform:scale(.85);} }
+
+  /* ---------- mistakes ---------- */
+  .mistakes-row{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:16px; }
+  .mistakes-label{ font-family:ui-monospace,SFMono-Regular,monospace; font-size:10.5px; letter-spacing:.08em; color:var(--ink-dim); }
+  .dots{ display:flex; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:50%; background:var(--ink-dim); transition:opacity .2s, background .2s; }
+  .dot.used{ background:transparent; border:1.5px solid var(--line); }
+
+  /* ---------- controls ---------- */
+  .controls{ display:flex; gap:8px; justify-content:center; }
+  .btn{
+    font-family:inherit;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    padding:11px 16px;
+    border-radius:22px;
+    border:1.5px solid var(--line);
+    background:transparent;
+    color:var(--ink);
+    cursor:pointer;
+    transition:opacity .15s, background .15s, border-color .15s;
+  }
+  .btn:hover{ background:var(--surface-hover); }
+  .btn:disabled{ opacity:.4; cursor:default; }
+  .btn:disabled:hover{ background:transparent; }
+  .btn--primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .btn--primary:hover{ background:var(--accent); opacity:.9; }
+  .btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* ---------- footer ---------- */
+  .foot{ margin-top:26px; display:flex; flex-direction:column; gap:12px; align-items:center; }
+  .puznav{ display:flex; align-items:center; gap:14px; }
+  .puznav button{
+    background:none; border:none; color:var(--ink-dim); font-size:20px; cursor:pointer; line-height:1;
+    padding:6px 8px;
+  }
+  .puznav button:hover{ color:var(--ink); }
+  .puznav .today{
+    font-family:ui-monospace,monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-dim); border:1px solid var(--line); border-radius:14px; padding:5px 12px;
+  }
+  .puznav .today:hover{ color:var(--ink); border-color:var(--ink-dim); }
+  .footlinks{ display:flex; gap:18px; }
+  .footlinks button{
+    background:none; border:none; color:var(--ink-dim); font-size:12px; letter-spacing:.04em;
+    text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:4px;
+    font-family:inherit; text-transform:uppercase; font-weight:600;
+  }
+  .footlinks button:hover{ color:var(--ink); }
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55);
+    display:none; align-items:flex-end; justify-content:center;
+    z-index:20; padding:0;
+  }
+  .modal-overlay:not([hidden]){ display:flex; }
+  @media (min-width:520px){ .modal-overlay{ align-items:center; } }
+  .modal{
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    border-radius:14px 14px 0 0;
+    width:100%; max-width:440px;
+    max-height:88vh; overflow-y:auto;
+    padding:22px 20px 28px;
+    position:relative;
+    animation:modalIn .22s ease both;
+  }
+  @media (min-width:520px){ .modal{ border-radius:14px; } }
+  @keyframes modalIn{ from{opacity:0; transform:translateY(18px);} to{opacity:1; transform:none;} }
+  .modal-close{
+    position:absolute; top:14px; right:14px; background:none; border:none;
+    color:var(--ink-dim); font-size:20px; cursor:pointer; line-height:1; padding:4px;
+  }
+  .modal-close:hover{ color:var(--ink); }
+  .modal h2{ font-size:20px; text-transform:uppercase; letter-spacing:-0.01em; margin:0 0 4px; font-weight:800; }
+  .modal p{ color:var(--ink-dim); font-size:14px; line-height:1.55; }
+  .modal .catline{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); }
+  .modal .catline:last-child{ border-bottom:none; }
+  .swatch{ width:14px; height:14px; border-radius:3px; flex:none; }
+  .modal .catline .catname{ font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.02em; }
+  .modal .catline .catitems{ font-size:12px; color:var(--ink-dim); }
+  .share-grid{ font-size:20px; line-height:1.35; letter-spacing:.1em; margin:14px 0; }
+  .statsrow{ display:flex; justify-content:space-around; text-align:center; margin:16px 0; }
+  .statnum{ font-family:ui-monospace,monospace; font-size:26px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .statlbl{ font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-dim); margin-top:2px; }
+  .howto li{ font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin-bottom:6px; }
+  .howto .key{ display:flex; gap:8px; align-items:center; margin:8px 0; }
+  .howto .key .swatch{ width:20px; height:20px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+  }
+</style>
+
+<div class="page">
+  <header>
+    <span class="tag"><b>♪</b> ROCK &amp; ROLL GROUPING GAME</span>
+    <h1>Setlist</h1>
+    <p class="sub">Find four sets of four. Bands, gear, names and noise — spanning the '60s to the 2010s. One theme per row.</p>
+    <div class="puzmeta">
+      <span id="puzTitle">—</span>
+      <span id="puzNumber">No. 000</span>
+    </div>
+  </header>
+
+  <main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="solved" class="solved-stack"></div>
+    <div id="grid" class="grid"></div>
+    <div class="mistakes-row">
+      <span class="mistakes-label">MISTAKES REMAINING</span>
+      <div id="mistakeDots" class="dots"></div>
+    </div>
+    <div class="controls">
+      <button id="btnShuffle" class="btn" type="button">↻ Shuffle</button>
+      <button id="btnDeselect" class="btn" type="button">Deselect</button>
+      <button id="btnSubmit" class="btn btn--primary" type="button" disabled>Submit</button>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <nav class="puznav">
+      <button id="btnPrev" aria-label="Previous setlist" type="button">‹</button>
+      <button id="btnToday" class="today" type="button">Today</button>
+      <button id="btnNext" aria-label="Next setlist" type="button">›</button>
+    </nav>
+    <div class="footlinks">
+      <button id="btnHelp" type="button">How to play</button>
+      <button id="btnStats" type="button">Stats</button>
+    </div>
+  </footer>
+</div>
+
+<div id="modalOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalHeading">
+    <button class="modal-close" id="modalClose" aria-label="Close" type="button">×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PUZZLES = [
+    { title:"Rock 101", cats:[
+      { name:"Classic Rock Bands", items:["PINK FLOYD","THE WHO","AEROSMITH","THE EAGLES"] },
+      { name:"Indie Rock Bands", items:["ARCTIC MONKEYS","THE STROKES","VAMPIRE WEEKEND","TAME IMPALA"] },
+      { name:"Guitar Parts & Gear", items:["FRET","PICKUP","WHAMMY BAR","CAPO"] },
+      { name:"One-Word Bands That Are Also Everyday Words", items:["KISS","RUSH","CREAM","POISON"] }
+    ]},
+    { title:"Six-String Legends", cats:[
+      { name:"Legendary Rock Guitarists", items:["JIMI HENDRIX","ERIC CLAPTON","JIMMY PAGE","SLASH"] },
+      { name:"Classic Rock Albums", items:["ABBEY ROAD","DARK SIDE OF THE MOON","RUMOURS","HOTEL CALIFORNIA"] },
+      { name:"Drum Kit Parts", items:["SNARE","HI-HAT","KICK PEDAL","CRASH CYMBAL"] },
+      { name:"'80s Pop Icons", items:["MADONNA","PRINCE","MICHAEL JACKSON","CYNDI LAUPER"] }
+    ]},
+    { title:"Underground to Mainstream", cats:[
+      { name:"Indie Rock Bands", items:["THE NATIONAL","SPOON","INTERPOL","MODEST MOUSE"] },
+      { name:"Famous Rock Bassists", items:["FLEA","JOHN PAUL JONES","GEDDY LEE","JOHN ENTWISTLE"] },
+      { name:"Guitar Effects Pedals", items:["FUZZ","WAH-WAH","DELAY","CHORUS"] },
+      { name:"'80s One-Hit Wonders", items:["A-HA","TOMMY TUTONE","DEXYS MIDNIGHT RUNNERS","SOFT CELL"] }
+    ]},
+    { title:"Supergroups & Setlists", cats:[
+      { name:"Classic Rock Supergroups", items:["CREAM","ASIA","TRAVELING WILBURYS","EMERSON LAKE & PALMER"] },
+      { name:"One-Word Indie Rock Bands", items:["BEIRUT","PHOENIX","YUCK","WAVVES"] },
+      { name:"Drum Kit Parts", items:["TOM-TOM","RIDE CYMBAL","LUG","RIM"] },
+      { name:"2000s Pop Icons", items:["BEYONCÉ","RIHANNA","JUSTIN TIMBERLAKE","KATY PERRY"] }
+    ]},
+    { title:"Frontmen & Fretwork", cats:[
+      { name:"Iconic Rock Frontmen", items:["FREDDIE MERCURY","ROBERT PLANT","MICK JAGGER","ROGER DALTREY"] },
+      { name:"Guitar Accessories", items:["STRAP","TUNER","PICK","GIG BAG"] },
+      { name:"Indie Rock Albums", items:["IS THIS IT","AM","TURN ON THE BRIGHT LIGHTS","FUNERAL"] },
+      { name:"'60s Icons", items:["THE BEATLES","THE BEACH BOYS","BOB DYLAN","JIMI HENDRIX"] }
+    ]},
+    { title:"Deep Cuts", cats:[
+      { name:"Classic Rock Keyboardists", items:["RICK WAKEMAN","KEITH EMERSON","RAY MANZAREK","JON LORD"] },
+      { name:"2010s Indie Rock Bands", items:["FOSTER THE PEOPLE","ALT-J","TWO DOOR CINEMA CLUB","MGMT"] },
+      { name:"Amp & Tone Gear", items:["HEAD","CABINET","REVERB TANK","TREMOLO"] },
+      { name:"Popular Music, One Icon Per Decade", items:["ABBA","MADONNA","NIRVANA","ADELE"] }
+    ]}
+  ];
+
+  var TIER_EMOJI = ["🟨","🟦","🟥","🟪"];
+  var START = Date.UTC(2026,7,9); // day 1
+
+  function dayNumberFor(d){
+    var u = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    return Math.floor((u - START) / 86400000) + 1;
+  }
+  var todayNumber = dayNumberFor(new Date());
+  var currentNumber = todayNumber;
+
+  function puzzleIndexFor(n){ return ((n - 1) % PUZZLES.length + PUZZLES.length) % PUZZLES.length; }
+  function puzzleFor(n){ return PUZZLES[puzzleIndexFor(n)]; }
+
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function seededShuffle(arr, seed){
+    var rand = mulberry32(seed), a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(rand() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+  function randomShuffle(arr){
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function stateKey(n){ return "setlist_state_" + n; }
+  function loadState(n){
+    var raw = null;
+    try{ raw = localStorage.getItem(stateKey(n)); }catch(e){}
+    if (raw){
+      try{ return JSON.parse(raw); }catch(e){}
+    }
+    var puzzle = puzzleFor(n);
+    var allItems = [];
+    puzzle.cats.forEach(function(c){ c.items.forEach(function(it){ allItems.push(it); }); });
+    return {
+      order: seededShuffle(allItems, n * 7919 + 13),
+      selected: [],
+      solvedTiers: [],
+      mistakesUsed: 0,
+      guesses: [],
+      over: false,
+      won: false
+    };
+  }
+  function saveState(n, s){
+    try{ localStorage.setItem(stateKey(n), JSON.stringify(s)); }catch(e){}
+  }
+
+  function loadStats(){
+    var raw = null;
+    try{ raw = localStorage.getItem("setlist_stats"); }catch(e){}
+    if (raw){ try{ return JSON.parse(raw); }catch(e){} }
+    return { played:0, won:0, currentStreak:0, maxStreak:0, completed:{} };
+  }
+  function saveStats(s){
+    try{ localStorage.setItem("setlist_stats", JSON.stringify(s)); }catch(e){}
+  }
+
+  function findTier(puzzle, item){
+    for (var i = 0; i < puzzle.cats.length; i++){
+      if (puzzle.cats[i].items.indexOf(item) !== -1) return i;
+    }
+    return -1;
+  }
+
+  function tileFontSize(len){
+    if (len <= 6) return "15px";
+    if (len <= 10) return "13.5px";
+    if (len <= 16) return "12px";
+    if (len <= 22) return "10.5px";
+    return "9.5px";
+  }
+
+  var els = {
+    puzTitle: document.getElementById("puzTitle"),
+    puzNumber: document.getElementById("puzNumber"),
+    toast: document.getElementById("toast"),
+    solved: document.getElementById("solved"),
+    grid: document.getElementById("grid"),
+    dots: document.getElementById("mistakeDots"),
+    btnShuffle: document.getElementById("btnShuffle"),
+    btnDeselect: document.getElementById("btnDeselect"),
+    btnSubmit: document.getElementById("btnSubmit"),
+    btnPrev: document.getElementById("btnPrev"),
+    btnNext: document.getElementById("btnNext"),
+    btnToday: document.getElementById("btnToday"),
+    btnHelp: document.getElementById("btnHelp"),
+    btnStats: document.getElementById("btnStats"),
+    overlay: document.getElementById("modalOverlay"),
+    modalBody: document.getElementById("modalBody"),
+    modalClose: document.getElementById("modalClose")
+  };
+
+  var puzzle, state, toastTimer;
+
+  function pad3(n){ n = String(n); while (n.length < 3) n = "0" + n; return n; }
+
+  function render(){
+    puzzle = puzzleFor(currentNumber);
+    state = loadState(currentNumber);
+
+    els.puzTitle.textContent = puzzle.title + (currentNumber === todayNumber ? "" : " (replay)");
+    els.puzNumber.textContent = "No. " + pad3(currentNumber);
+
+    // solved stack
+    els.solved.innerHTML = "";
+    state.solvedTiers.slice().sort(function(a,b){return a-b;}).forEach(function(t){
+      var cat = puzzle.cats[t];
+      var row = document.createElement("div");
+      row.className = "solved-row";
+      row.style.background = "var(--tier" + (t+1) + ")";
+      row.style.color = "var(--tier" + (t+1) + "-ink)";
+      row.innerHTML = '<div class="cat">' + cat.name + '</div><div class="items">' + cat.items.join(" · ") + "</div>";
+      els.solved.appendChild(row);
+    });
+
+    // grid: items not yet solved, in stored order
+    var solvedItems = {};
+    state.solvedTiers.forEach(function(t){ puzzle.cats[t].items.forEach(function(it){ solvedItems[it] = true; }); });
+    var visible = state.order.filter(function(it){ return !solvedItems[it]; });
+
+    els.grid.innerHTML = "";
+    visible.forEach(function(item){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tile" + (state.selected.indexOf(item) !== -1 ? " selected" : "");
+      b.style.fontSize = tileFontSize(item.length);
+      b.textContent = item;
+      b.disabled = state.over;
+      b.addEventListener("click", function(){ toggleSelect(item); });
+      els.grid.appendChild(b);
+    });
+
+    // mistakes
+    els.dots.innerHTML = "";
+    for (var i = 0; i < 4; i++){
+      var d = document.createElement("span");
+      d.className = "dot" + (i < state.mistakesUsed ? " used" : "");
+      els.dots.appendChild(d);
+    }
+
+    els.btnSubmit.disabled = state.selected.length !== 4 || state.over;
+    els.btnDeselect.disabled = state.selected.length === 0 || state.over;
+    els.btnShuffle.disabled = state.over;
+    els.btnToday.style.opacity = currentNumber === todayNumber ? ".45" : "1";
+
+    if (state.over && !document.getElementById("__autoEndShown_" + currentNumber)){
+      openEndModal();
+      var marker = document.createElement("span");
+      marker.id = "__autoEndShown_" + currentNumber;
+      marker.style.display = "none";
+      document.body.appendChild(marker);
+    }
+  }
+
+  function toggleSelect(item){
+    if (state.over) return;
+    var idx = state.selected.indexOf(item);
+    if (idx !== -1){
+      state.selected.splice(idx, 1);
+    } else {
+      if (state.selected.length >= 4) return;
+      state.selected.push(item);
+    }
+    saveState(currentNumber, state);
+    render();
+  }
+
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ els.toast.classList.remove("show"); }, 1500);
+  }
+
+  function shakeSelected(){
+    var tiles = els.grid.querySelectorAll(".tile.selected");
+    tiles.forEach(function(t){
+      t.classList.add("shake");
+      setTimeout(function(){ t.classList.remove("shake"); }, 340);
+    });
+  }
+
+  function submit(){
+    if (state.selected.length !== 4 || state.over) return;
+    var sel = state.selected.slice();
+    var selSet = sel.slice().sort().join("|");
+
+    var matchTier = -1;
+    for (var i = 0; i < puzzle.cats.length; i++){
+      if (state.solvedTiers.indexOf(i) !== -1) continue;
+      var catSet = puzzle.cats[i].items.slice().sort().join("|");
+      if (catSet === selSet){ matchTier = i; break; }
+    }
+
+    var guessRecord = sel.map(function(it){ return { item: it, tier: findTier(puzzle, it) }; });
+    state.guesses.push(guessRecord);
+
+    if (matchTier !== -1){
+      state.solvedTiers.push(matchTier);
+      state.selected = [];
+      showToast("Nailed it — " + puzzle.cats[matchTier].name);
+      saveState(currentNumber, state);
+      render();
+      if (state.solvedTiers.length === puzzle.cats.length){
+        state.over = true; state.won = true;
+        saveState(currentNumber, state);
+        finishRun(true);
+        render();
+      }
+      return;
+    }
+
+    // not a match: check "one away"
+    var best = 0;
+    puzzle.cats.forEach(function(c, i){
+      if (state.solvedTiers.indexOf(i) !== -1) return;
+      var overlap = sel.filter(function(it){ return c.items.indexOf(it) !== -1; }).length;
+      if (overlap > best) best = overlap;
+    });
+
+    state.mistakesUsed++;
+    shakeSelected();
+    if (best === 3) showToast("One away…");
+    else showToast("Not quite — try again");
+
+    if (state.mistakesUsed >= 4){
+      state.over = true; state.won = false;
+      saveState(currentNumber, state);
+      finishRun(false);
+      render();
+      return;
+    }
+
+    saveState(currentNumber, state);
+    render();
+  }
+
+  function finishRun(won){
+    if (currentNumber !== todayNumber) return; // only daily plays count toward stats
+    var stats = loadStats();
+    if (stats.completed[currentNumber]) return;
+    stats.completed[currentNumber] = true;
+    stats.played++;
+    if (won){
+      stats.won++;
+      stats.currentStreak = (stats.completed[currentNumber - 1]) ? stats.currentStreak + 1 : 1;
+      if (stats.currentStreak > stats.maxStreak) stats.maxStreak = stats.currentStreak;
+    } else {
+      stats.currentStreak = 0;
+    }
+    saveStats(stats);
+  }
+
+  function shuffle(){
+    if (state.over) return;
+    var solvedItems = {};
+    state.solvedTiers.forEach(function(t){ puzzle.cats[t].items.forEach(function(it){ solvedItems[it] = true; }); });
+    var visible = state.order.filter(function(it){ return !solvedItems[it]; });
+    var solved = state.order.filter(function(it){ return solvedItems[it]; });
+    state.order = solved.concat(randomShuffle(visible));
+    saveState(currentNumber, state);
+    render();
+  }
+
+  function deselectAll(){
+    state.selected = [];
+    saveState(currentNumber, state);
+    render();
+  }
+
+  function catSwatch(t){ return '<span class="swatch" style="background:var(--tier' + (t+1) + ')"></span>'; }
+
+  function openEndModal(){
+    var won = state.won;
+    var html = "";
+    html += '<h2 id="modalHeading">' + (won ? "You cleared the setlist" : "That's a wrap") + "</h2>";
+    html += "<p>" + (won ? "Solved with " + state.mistakesUsed + " mistake" + (state.mistakesUsed === 1 ? "" : "s") + "." : "Here's how tonight's setlist breaks down.") + "</p>";
+
+    puzzle.cats.forEach(function(c, i){
+      html += '<div class="catline">' + catSwatch(i) + '<div><div class="catname">' + c.name + '</div><div class="catitems">' + c.items.join(" · ") + "</div></div></div>";
+    });
+
+    var shareLines = ["SETLIST #" + pad3(currentNumber) + (currentNumber === todayNumber ? "" : " (replay)")];
+    state.guesses.forEach(function(g){
+      shareLines.push(g.map(function(x){ return TIER_EMOJI[x.tier]; }).join(""));
+    });
+    shareLines.push(won ? ("Solved · " + state.mistakesUsed + "/4 mistakes") : "Didn't finish");
+    var shareText = shareLines.join("\n");
+
+    html += '<div class="share-grid">' + state.guesses.map(function(g){ return g.map(function(x){ return TIER_EMOJI[x.tier]; }).join(""); }).join("<br>") + "</div>";
+    html += '<button class="btn btn--primary" id="btnShare" type="button" style="width:100%">Copy results to share</button>';
+
+    els.modalBody.innerHTML = html;
+    els.overlay.hidden = false;
+
+    document.getElementById("btnShare").addEventListener("click", function(btn){
+      var b = document.getElementById("btnShare");
+      var text = shareText;
+      var done = function(){ b.textContent = "Copied ✓"; setTimeout(function(){ b.textContent = "Copy results to share"; }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done).catch(function(){ b.textContent = "Couldn't copy"; });
+      } else {
+        b.textContent = "Couldn't copy";
+      }
+    });
+  }
+
+  function openHelpModal(){
+    var html = "";
+    html += '<h2 id="modalHeading">How to play</h2>';
+    html += '<ul class="howto">' +
+      '<li>16 tiles hide 4 sets of 4 — bands, gear, people, decades. Find the connection.</li>' +
+      '<li>Tap up to 4 tiles, then <strong>Submit</strong>. A full match locks in and rises to the top.</li>' +
+      '<li>Four wrong guesses and the setlist ends — the rest gets revealed.</li>' +
+      '<li>Sets get harder top to bottom:</li></ul>';
+    html += '<div class="howto">';
+    html += '<div class="key">' + catSwatch(0) + 'Easiest</div>';
+    html += '<div class="key">' + catSwatch(1) + 'Medium</div>';
+    html += '<div class="key">' + catSwatch(2) + 'Harder</div>';
+    html += '<div class="key">' + catSwatch(3) + 'Trickiest (wordplay, red herrings)</div>';
+    html += '</div>';
+    html += '<p>A new setlist unlocks daily — <strong>Today</strong> stays in sync with your friends, and ‹ › browse past ones any time.</p>';
+    els.modalBody.innerHTML = html;
+    els.overlay.hidden = false;
+  }
+
+  function openStatsModal(){
+    var s = loadStats();
+    var winPct = s.played ? Math.round(100 * s.won / s.played) : 0;
+    var html = "";
+    html += '<h2 id="modalHeading">Your stats</h2>';
+    html += '<p>Counted from today’s setlist only — replays of past setlists don’t affect your streak.</p>';
+    html += '<div class="statsrow">' +
+      '<div><div class="statnum">' + s.played + '</div><div class="statlbl">Played</div></div>' +
+      '<div><div class="statnum">' + winPct + '%</div><div class="statlbl">Win rate</div></div>' +
+      '<div><div class="statnum">' + s.currentStreak + '</div><div class="statlbl">Streak</div></div>' +
+      '<div><div class="statnum">' + s.maxStreak + '</div><div class="statlbl">Best</div></div>' +
+      '</div>';
+    els.modalBody.innerHTML = html;
+    els.overlay.hidden = false;
+  }
+
+  function closeModal(){ els.overlay.hidden = true; els.modalBody.innerHTML = ""; }
+
+  els.btnSubmit.addEventListener("click", submit);
+  els.btnShuffle.addEventListener("click", shuffle);
+  els.btnDeselect.addEventListener("click", deselectAll);
+  els.btnPrev.addEventListener("click", function(){ currentNumber--; render(); });
+  els.btnNext.addEventListener("click", function(){ currentNumber++; render(); });
+  els.btnToday.addEventListener("click", function(){ currentNumber = todayNumber; render(); });
+  els.btnHelp.addEventListener("click", openHelpModal);
+  els.btnStats.addEventListener("click", openStatsModal);
+  els.modalClose.addEventListener("click", closeModal);
+  els.overlay.addEventListener("click", function(e){ if (e.target === els.overlay) closeModal(); });
+
+  render();
+})();
+</script>
