@@ -1,0 +1,15 @@
+{
+  "name": "Setlist — a rock & roll grouping game",
+  "short_name": "Setlist",
+  "description": "A Connections-style grouping puzzle for rock and roll fans.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#15120e",
+  "theme_color": "#15120e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
